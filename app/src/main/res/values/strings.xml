@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">SignInDemoApp</string>
+    <string name="server_client_id" translatable="false">1071636679426-2uv97ohle2q838i0dpv6j4bqblgncp06.apps.googleusercontent.com</string>
+    <string name="request_hints">Request Hints</string>
+    <string name="request_user_credentials">Request User Credentials</string>
+    <string name="email_address">Email Address</string>
+    <string name="password">Password</string>
+    <string name="save_credentials">Save Credentials</string>
+</resources>
