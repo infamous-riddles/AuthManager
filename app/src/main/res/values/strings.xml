@@ -8,4 +8,8 @@
     <string name="save_credentials">Save Credentials</string>
     <string name="google_sign_out">Google Sign-Out</string>
     <string name="revoke_access">Revoke Access</string>
+    <string name="credential_received">Credential</string>
+    <string name="use_credential">Use it</string>
+    <string name="delete_credential">Delete it</string>
+    <string name="what_do_you_want_to_do_with_credential">What do you want to do with the Credential?</string>
 </resources>

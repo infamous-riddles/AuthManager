@@ -1,6 +1,8 @@
 package com.github.pavlospt.signindemo
 
-interface SmartLockView : BaseView{
+import com.google.android.gms.common.api.Status
+
+interface SmartLockView : BaseView {
 
     fun credentialSaveResolutionCancelled()
     fun credentialSaveResolutionFailure()
@@ -11,5 +13,5 @@ interface SmartLockView : BaseView{
 
     fun credentialSaveFailure()
     fun credentialSaveSuccess()
-
+    fun credentialDelete(status: Status)
 }

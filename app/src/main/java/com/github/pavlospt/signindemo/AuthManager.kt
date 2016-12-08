@@ -98,6 +98,17 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
             })
     }
 
+    fun deleteCredential(credential: Credential?) {
+        credential?.let {
+            Auth
+                .CredentialsApi
+                .delete(googleApiClient, credential)
+                .setResultCallback {
+                    smartLockView.get()?.credentialDelete(it)
+                }
+        }
+    }
+
     /*
    * Handle Credential Save Result
    * */

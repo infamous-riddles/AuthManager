@@ -3,6 +3,7 @@ package com.github.pavlospt.signindemo
 import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.TextInputLayout
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Button
@@ -276,10 +277,28 @@ class SignInActivity : AppCompatActivity(),
 
     override fun signInSuccess(signInSuccess: SignInSuccess) {
         if (signInSuccess.hasCredential()) {
-            MainActivity.startActivity(this, signInSuccess.credential.id)
+            showCredentialDialog(signInSuccess.credential)
         } else if (signInSuccess.hasGoogleSignInAccount()) {
             MainActivity.startActivity(this, signInSuccess.googleSignInAccount.email)
         }
+    }
+
+    private fun showCredentialDialog(credential: Credential?) {
+        val alertDialogBuilder: AlertDialog.Builder = AlertDialog
+            .Builder(this)
+            .setTitle(R.string.credential_received)
+            .setMessage(R.string.what_do_you_want_to_do_with_credential)
+            .setPositiveButton(getString(R.string.use_credential), { dialogInterface, i ->
+                MainActivity.startActivity(this@SignInActivity, credential?.id)
+            })
+            .setNegativeButton(getString(R.string.delete_credential), { dialogInterface, i ->
+                authManager?.deleteCredential(credential)
+                dialogInterface.dismiss()
+                dialogInterface.cancel()
+            })
+
+        val alertDialog: AlertDialog = alertDialogBuilder.create()
+        alertDialog.show()
     }
 
     override fun googleSignOut(status: Status) {
@@ -288,6 +307,11 @@ class SignInActivity : AppCompatActivity(),
 
     override fun googleAccessRevoked(status: Status) {
         Toast.makeText(this, "Google Access Revoked with status: $status", Toast.LENGTH_SHORT).show()
+    }
+
+
+    override fun credentialDelete(status: Status) {
+        Toast.makeText(this, "Credential deleted with status: $status", Toast.LENGTH_SHORT).show()
     }
 
     /*
