@@ -1,1 +1,1 @@
-include ':app', ':authmanager'
+include ':app'

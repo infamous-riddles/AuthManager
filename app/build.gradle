@@ -25,9 +25,9 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile project(':authmanager')
     compile 'com.android.support:appcompat-v7:25.0.1'
     compile 'com.android.support:design:25.0.1'
+    compile 'com.google.android.gms:play-services-auth:10.0.1'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'

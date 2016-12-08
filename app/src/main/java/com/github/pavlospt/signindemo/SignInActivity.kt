@@ -8,10 +8,10 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
-import com.github.pavlospt.authmanager.models.SignInSuccess
-import com.github.pavlospt.authmanager.views.GoogleView
-import com.github.pavlospt.authmanager.views.HintView
-import com.github.pavlospt.authmanager.views.SmartLockView
+import com.github.pavlospt.signindemo.models.SignInSuccess
+import com.github.pavlospt.signindemo.views.GoogleView
+import com.github.pavlospt.signindemo.views.HintView
+import com.github.pavlospt.signindemo.views.SmartLockView
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.CredentialPickerConfig
@@ -25,8 +25,8 @@ import com.google.android.gms.common.api.Status
 
 
 class SignInActivity : AppCompatActivity(),
-    GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
-    GoogleView, SmartLockView, HintView {
+        GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
+        GoogleView, SmartLockView, HintView {
 
     private var authManager: AuthManager? = null
 
@@ -69,7 +69,7 @@ class SignInActivity : AppCompatActivity(),
         signInButton.setSize(SignInButton.SIZE_WIDE)
 
         requestUserCredentials.setOnClickListener {
-            authManager?.requestCredentials()
+            authManager?.requestCredential()
         }
 
         requestHintsButton.setOnClickListener {
@@ -101,50 +101,51 @@ class SignInActivity : AppCompatActivity(),
         val smartlockReq = createSmartlockCredentialsRequest()
 
         authManager = AuthManager
-            .Builder(this)
-            .withGoogle(this, googleApiClient)
-            .withHints(this, hintRequest)
-            .withSmartlock(this, smartlockReq)
-            .build()
+                .Builder(this)
+                .withGoogleApiClient(googleApiClient)
+                .withGoogle(this)
+                .withHints(this, hintRequest)
+                .withSmartLock(this, smartlockReq)
+                .build()
     }
 
     /*
     * Initialize Hint request
     * */
     private fun createHintRequest() = HintRequest.Builder()
-        .setHintPickerConfig(
-            CredentialPickerConfig.Builder()
-                .setShowCancelButton(true)
-                .setPrompt(CredentialPickerConfig.Prompt.SIGN_IN)
-                .build()
-        )
-        .setEmailAddressIdentifierSupported(true)
-        .build()
+            .setHintPickerConfig(
+                    CredentialPickerConfig.Builder()
+                            .setShowCancelButton(true)
+                            .setPrompt(CredentialPickerConfig.Prompt.SIGN_IN)
+                            .build()
+            )
+            .setEmailAddressIdentifierSupported(true)
+            .build()
 
     /*
     * Initialize Google Sign-in options
     * */
     private fun createGoogleSignInOptions() = GoogleSignInOptions
-        .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestEmail()
-        .build()
+            .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .build()
 
     /*
     * Initialize Smartlock credentials request
     * */
     private fun createSmartlockCredentialsRequest() = CredentialRequest.Builder()
-        .setPasswordLoginSupported(true)
-        .build()
+            .setPasswordLoginSupported(true)
+            .build()
 
     /*
     * Initialize Google API Client
     * */
     private fun createGoogleApiClient() = GoogleApiClient.Builder(this)
-        .addConnectionCallbacks(this)
-        .enableAutoManage(this, this)
-        .addApi(Auth.GOOGLE_SIGN_IN_API, createGoogleSignInOptions())
-        .addApi(Auth.CREDENTIALS_API)
-        .build()
+            .addConnectionCallbacks(this)
+            .enableAutoManage(this, this)
+            .addApi(Auth.GOOGLE_SIGN_IN_API, createGoogleSignInOptions())
+            .addApi(Auth.CREDENTIALS_API)
+            .build()
 
     //endregion
 
@@ -228,10 +229,10 @@ class SignInActivity : AppCompatActivity(),
         }
 
         val credentialToSave: Credential =
-            Credential
-                .Builder(emailAddressTextInput.editText?.text.toString())
-                .setPassword(passwordTextInput.editText?.text.toString().trim())
-                .build()
+                Credential
+                        .Builder(emailAddressTextInput.editText?.text.toString())
+                        .setPassword(passwordTextInput.editText?.text.toString().trim())
+                        .build()
 
         authManager?.saveCredential(credentialToSave)
     }
@@ -279,6 +280,10 @@ class SignInActivity : AppCompatActivity(),
     }
     //endregion
 
+    override fun emailHintSelected(credential: Credential?) {
+        MainActivity.startActivity(this, credential?.id)
+    }
+
     override fun signInSuccess(signInSuccess: SignInSuccess) {
         if (signInSuccess.hasCredential()) {
             showCredentialDialog(signInSuccess.credential)
@@ -289,17 +294,17 @@ class SignInActivity : AppCompatActivity(),
 
     private fun showCredentialDialog(credential: Credential?) {
         val alertDialogBuilder: AlertDialog.Builder = AlertDialog
-            .Builder(this)
-            .setTitle(R.string.credential_received)
-            .setMessage(getString(R.string.what_do_you_want_to_do_with_credential, credential?.id))
-            .setPositiveButton(getString(R.string.use_credential), { dialogInterface, i ->
-                MainActivity.startActivity(this@SignInActivity, credential?.id)
-            })
-            .setNegativeButton(getString(R.string.delete_credential), { dialogInterface, i ->
-                authManager?.deleteCredential(credential)
-                dialogInterface.dismiss()
-                dialogInterface.cancel()
-            })
+                .Builder(this)
+                .setTitle(R.string.credential_received)
+                .setMessage(getString(R.string.what_do_you_want_to_do_with_credential, credential?.id))
+                .setPositiveButton(getString(R.string.use_credential), { dialogInterface, i ->
+                    MainActivity.startActivity(this@SignInActivity, credential?.id)
+                })
+                .setNegativeButton(getString(R.string.delete_credential), { dialogInterface, i ->
+                    authManager?.deleteCredential(credential)
+                    dialogInterface.dismiss()
+                    dialogInterface.cancel()
+                })
 
         val alertDialog: AlertDialog = alertDialogBuilder.create()
         alertDialog.show()

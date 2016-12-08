@@ -1,6 +1,6 @@
-package com.github.pavlospt.authmanager.views
+package com.github.pavlospt.signindemo.views
 
-import com.github.pavlospt.signindemo.BaseView
+import com.github.pavlospt.signindemo.views.BaseView
 import com.google.android.gms.common.api.Status
 
 interface SmartLockView : BaseView {

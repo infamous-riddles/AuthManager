@@ -1,4 +1,4 @@
-package com.github.pavlospt.authmanager.models;
+package com.github.pavlospt.signindemo.models;
 
 import com.google.android.gms.auth.api.credentials.Credential;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
