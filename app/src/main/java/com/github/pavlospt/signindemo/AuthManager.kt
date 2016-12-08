@@ -14,6 +14,7 @@ import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.common.api.Result
 import com.google.android.gms.common.api.Status
+import java.lang.ref.WeakReference
 
 class AuthManager private constructor(builder: AuthManagerBuilder) {
 
@@ -30,14 +31,14 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
 
     private var activity: AppCompatActivity
 
-    private var googleView: GoogleView? = null
+    private var googleView: WeakReference<GoogleView>
     private var googleApiClient: GoogleApiClient? = null
 
 
-    private var smartLockView: SmartLockView? = null
+    private var smartLockView: WeakReference<SmartLockView>
     private var smartlockCredentialsRequest: CredentialRequest? = null
 
-    private var hintView: HintView? = null
+    private var hintView: WeakReference<HintView>
     private var hintRequest: HintRequest? = null
 
 
@@ -53,13 +54,13 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
 
         activity = builder.activity
 
-        googleView = builder.googleView
+        googleView = WeakReference(builder.googleView)
         googleApiClient = builder.googleApiClient
 
-        smartLockView = builder.smartLockView
+        smartLockView = WeakReference(builder.smartLockView)
         smartlockCredentialsRequest = builder.smartlockCredentialsRequest
 
-        hintView = builder.hintView
+        hintView = WeakReference(builder.hintView)
         hintRequest = builder.hintRequest
     }
 
@@ -85,7 +86,7 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         val status: Status = result.status
 
         if (status.isSuccess) {
-            smartLockView?.credentialSaveSuccess()
+            smartLockView.get()?.credentialSaveSuccess()
         } else {
             handlePossibleCredentialSaveResolution(status)
         }
@@ -100,10 +101,10 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
             try {
                 status.startResolutionForResult(activity, RC_CREDENTIAL_SAVE)
             } catch (e: IntentSender.SendIntentException) {
-                smartLockView?.credentialSaveResolutionFailure()
+                smartLockView.get()?.credentialSaveResolutionFailure()
             }
         } else {
-            smartLockView?.credentialSaveFailure()
+            smartLockView.get()?.credentialSaveFailure()
         }
     }
 
@@ -113,22 +114,22 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
     * */
     private fun handleCredentialSaveResolution(resultCode: Int, data: Intent?) {
         if (resultCode == AppCompatActivity.RESULT_CANCELED) {
-            smartLockView?.credentialSaveResolutionCancelled()
+            smartLockView.get()?.credentialSaveResolutionCancelled()
         } else {
-            smartLockView?.credentialSaveSuccess()
+            smartLockView.get()?.credentialSaveSuccess()
         }
     }
 
     /*
-* Handle Hint Request Resolution
-* */
+     * Handle Hint Request Resolution
+     * */
     private fun handleEmailHintRequestResolution(resultCode: Int, data: Intent?) {
         if (resultCode == AppCompatActivity.RESULT_CANCELED) {
-            hintView?.emailHintRequestCancelled()
+            hintView.get()?.emailHintRequestCancelled()
         } else {
             val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
             credential?.let {
-                hintView?.signInSuccess(SignInSuccess(null, it))
+                hintView.get()?.signInSuccess(SignInSuccess(null, it))
             }
         }
     }
@@ -141,7 +142,7 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         try {
             activity.startIntentSenderForResult(intent.intentSender, RC_HINT_REQUEST, null, 0, 0, 0)
         } catch (e: IntentSender.SendIntentException) {
-            hintView?.emailHintRequestFailure()
+            hintView.get()?.emailHintRequestFailure()
         }
     }
 
@@ -151,7 +152,7 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
     * */
     private fun handleCredentialRequestResult(credentialRequestResult: CredentialRequestResult) {
         if (credentialRequestResult.status.isSuccess) {
-            smartLockView?.signInSuccess(SignInSuccess(null, credentialRequestResult.credential))
+            smartLockView.get()?.signInSuccess(SignInSuccess(null, credentialRequestResult.credential))
         } else {
             resolveCredentialRequest(credentialRequestResult.status)
         }
@@ -162,7 +163,7 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         if (status?.statusCode == CommonStatusCodes.RESOLUTION_REQUIRED) {
             initiateCredentialRequestResolution(status)
         } else {
-            smartLockView?.credentialRequestFailure()
+            smartLockView.get()?.credentialRequestFailure()
         }
     }
 
@@ -172,11 +173,11 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
     * */
     private fun handleCredentialRequestResolution(resultCode: Int, data: Intent?) {
         if (resultCode == AppCompatActivity.RESULT_CANCELED) {
-            smartLockView?.credentialRequestCancelled()
+            smartLockView.get()?.credentialRequestCancelled()
         } else {
             val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
             credential?.let {
-                smartLockView?.signInSuccess(SignInSuccess(null, it))
+                smartLockView.get()?.signInSuccess(SignInSuccess(null, it))
             }
         }
     }
@@ -189,7 +190,7 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         try {
             status?.startResolutionForResult(activity, RC_CREDENTIALS_REQUEST)
         } catch (sendIntentException: IntentSender.SendIntentException) {
-            smartLockView?.credentialRequestResolutionFailure()
+            smartLockView.get()?.credentialRequestResolutionFailure()
         }
     }
 
@@ -199,16 +200,16 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
     * */
     private fun handleGoogleSignInResolution(resultCode: Int, data: Intent?) {
         if (resultCode == AppCompatActivity.RESULT_CANCELED) {
-            googleView?.userCancelledGoogleSignIn()
+            googleView.get()?.userCancelledGoogleSignIn()
         } else {
 
             val googleSignInResult: GoogleSignInResult = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
 
             if (googleSignInResult.isSuccess) {
                 val googleSignInAccount: GoogleSignInAccount? = googleSignInResult.signInAccount
-                googleView?.signInSuccess(SignInSuccess(googleSignInAccount, null))
+                googleView.get()?.signInSuccess(SignInSuccess(googleSignInAccount, null))
             } else {
-                googleView?.googleSignInResultFailure()
+                googleView.get()?.googleSignInResultFailure()
             }
         }
     }
@@ -232,33 +233,40 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         }
     }
 
+    fun destroy() {
+        googleView.clear()
+        smartLockView.clear()
+        hintView.clear()
+    }
+
 
     class AuthManagerBuilder internal constructor(val activity: AppCompatActivity) {
 
-        var googleView: GoogleView? = null
+        lateinit var googleView: GoogleView
             private set
 
-        var googleApiClient: GoogleApiClient? = null
+        lateinit var googleApiClient: GoogleApiClient
             private set
 
-        var smartLockView: SmartLockView? = null
+        lateinit var smartLockView: SmartLockView
             private set
 
-        var smartlockCredentialsRequest: CredentialRequest? = null
+        lateinit var smartlockCredentialsRequest: CredentialRequest
             private set
 
-        var hintView: HintView? = null
+        lateinit var hintView: HintView
             private set
 
-        var hintRequest: HintRequest? = null
+        lateinit var hintRequest: HintRequest
             private set
 
 
         fun withGoogle(googleView: GoogleView, googleApiClient: GoogleApiClient) = apply {
+            this.googleView = googleView
             this.googleApiClient = googleApiClient
         }
 
-        fun withSmartlock(smartLockView: SmartLockView, smartlockCredentialsRequest: CredentialRequest?) = apply {
+        fun withSmartlock(smartLockView: SmartLockView, smartlockCredentialsRequest: CredentialRequest) = apply {
             this.smartLockView = smartLockView
             this.smartlockCredentialsRequest = smartlockCredentialsRequest
         }
