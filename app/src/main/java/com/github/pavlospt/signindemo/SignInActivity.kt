@@ -12,9 +12,7 @@ import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.CredentialPickerConfig
 import com.google.android.gms.auth.api.credentials.CredentialRequest
 import com.google.android.gms.auth.api.credentials.HintRequest
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.auth.api.signin.GoogleSignInResult
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.GoogleApiClient
@@ -142,20 +140,6 @@ class SignInActivity : AppCompatActivity(),
     //region GoogleSignIn
 
     /*
-    * User Google Sign-In Success
-    * */
-    override fun userGoogleSignInSuccess(data: Intent?) {
-        val googleSignInResult: GoogleSignInResult = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
-
-        if (googleSignInResult.isSuccess) {
-            val googleSignInAccount: GoogleSignInAccount? = googleSignInResult.signInAccount
-            signInSuccess(googleSignInAccount?.email!!)
-        } else {
-            googleSignInResultFailure()
-        }
-    }
-
-    /*
     * Google Sign-In Failure
     * */
     override fun googleSignInResultFailure() {
@@ -171,16 +155,6 @@ class SignInActivity : AppCompatActivity(),
     //endregion
 
     //region CredentialsRequest
-
-    /*
-    * Credential Request Resolution Success
-    * */
-    override fun credentialRequestResolutionSuccess(data: Intent?) {
-        val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
-        credential?.let {
-            signInSuccess(it.id)
-        }
-    }
 
 
     /*
@@ -205,18 +179,6 @@ class SignInActivity : AppCompatActivity(),
     }
 
     //endregion
-
-
-    /*
-    * Handle Hint Request Success
-    * */
-    override fun emailHintRequestSuccess(data: Intent?) {
-        val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
-        credential?.let {
-            signInSuccess(it.id)
-        }
-    }
-
 
     /*
     * Hint Request Cancelled
@@ -307,8 +269,12 @@ class SignInActivity : AppCompatActivity(),
     }
     //endregion
 
-    override fun signInSuccess(email: String) {
-        MainActivity.startActivity(this, email)
+    override fun signInSuccess(signInSuccess: SignInSuccess) {
+        if(signInSuccess.hasCredential()) {
+            MainActivity.startActivity(this, signInSuccess.credential.id)
+        }else if(signInSuccess.hasGoogleSignInAccount()){
+            MainActivity.startActivity(this, signInSuccess.googleSignInAccount.id)
+        }
     }
 
 

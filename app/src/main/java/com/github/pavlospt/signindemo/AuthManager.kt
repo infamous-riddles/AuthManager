@@ -8,6 +8,8 @@ import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.CredentialRequest
 import com.google.android.gms.auth.api.credentials.CredentialRequestResult
 import com.google.android.gms.auth.api.credentials.HintRequest
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInResult
 import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.common.api.Result
@@ -124,7 +126,10 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         if (resultCode == AppCompatActivity.RESULT_CANCELED) {
             hintView?.emailHintRequestCancelled()
         } else {
-            hintView?.emailHintRequestSuccess(data)
+            val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
+            credential?.let {
+                hintView?.signInSuccess(SignInSuccess(null, it))
+            }
         }
     }
 
@@ -146,7 +151,7 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
     * */
     private fun handleCredentialRequestResult(credentialRequestResult: CredentialRequestResult) {
         if (credentialRequestResult.status.isSuccess) {
-            smartLockView?.signInSuccess(credentialRequestResult.credential.id)
+            smartLockView?.signInSuccess(SignInSuccess(null, credentialRequestResult.credential))
         } else {
             resolveCredentialRequest(credentialRequestResult.status)
         }
@@ -169,7 +174,10 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         if (resultCode == AppCompatActivity.RESULT_CANCELED) {
             smartLockView?.credentialRequestCancelled()
         } else {
-            smartLockView?.credentialRequestResolutionSuccess(data)
+            val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
+            credential?.let {
+                smartLockView?.signInSuccess(SignInSuccess(null, it))
+            }
         }
     }
 
@@ -193,7 +201,15 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         if (resultCode == AppCompatActivity.RESULT_CANCELED) {
             googleView?.userCancelledGoogleSignIn()
         } else {
-            googleView?.userGoogleSignInSuccess(data)
+
+            val googleSignInResult: GoogleSignInResult = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
+
+            if (googleSignInResult.isSuccess) {
+                val googleSignInAccount: GoogleSignInAccount? = googleSignInResult.signInAccount
+                googleView?.signInSuccess(SignInSuccess(googleSignInAccount, null))
+            } else {
+                googleView?.googleSignInResultFailure()
+            }
         }
     }
 
