@@ -1,37 +1,33 @@
 package com.github.pavlospt.signindemo
 
 import android.content.Intent
-import android.content.IntentSender
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.design.widget.TextInputLayout
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import com.google.android.gms.auth.api.Auth
-import com.google.android.gms.auth.api.credentials.*
+import com.google.android.gms.auth.api.credentials.Credential
+import com.google.android.gms.auth.api.credentials.CredentialPickerConfig
+import com.google.android.gms.auth.api.credentials.CredentialRequest
+import com.google.android.gms.auth.api.credentials.HintRequest
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.auth.api.signin.GoogleSignInResult
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.SignInButton
-import com.google.android.gms.common.api.*
+import com.google.android.gms.common.api.GoogleApiClient
 
 
-class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks {
+class SignInActivity : AppCompatActivity(),
+        GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
+        GoogleView, SmartLockView, HintView {
 
-    /*
-    * Google related variables
-    * */
-    private val RC_SIGN_IN = 1
-    private val RC_CREDENTIALS_REQUEST = 2
-    private val RC_HINT_REQUEST = 3
-    private val RC_CREDENTIAL_SAVE = 4
 
-    private lateinit var googleApiClient: GoogleApiClient
-    private lateinit var googleSignInOptions: GoogleSignInOptions
-    private lateinit var smartlockCredentialsRequest: CredentialRequest
-    private lateinit var hintRequest: HintRequest
+
+    private var authManager: AuthManager? = null
+
 
     /*
     * Views
@@ -49,11 +45,8 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
         setContentView(R.layout.activity_sign_in)
 
         initViews()
+        initAuthManager()
 
-        initGoogleSignInOptions()
-        initSmartlockCredentialsRequest()
-        initHintRequest()
-        initGoogleApiClient()
     }
 
     private fun initViews() {
@@ -72,15 +65,15 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
         signInButton.setSize(SignInButton.SIZE_WIDE)
 
         requestUserCredentials.setOnClickListener {
-            requestCredentials()
+            authManager?.requestCredentials()
         }
 
         requestHintsButton.setOnClickListener {
-            requestEmailHints()
+            authManager?.requestEmailHints()
         }
 
         signInButton.setOnClickListener {
-            initiateGoogleSignIn()
+            authManager?.signInWithGoogle()
         }
 
         saveCredentialsButton.setOnClickListener {
@@ -89,83 +82,74 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
     }
 
     //region Initializations
+
+    private fun initAuthManager() {
+        val googleApiClient = createGoogleApiClient()
+        val hintRequest = createHintRequest()
+        val smartlockReq = createSmartlockCredentialsRequest()
+
+        authManager = AuthManager
+                .Builder(this)
+                .withGoogle(this, googleApiClient)
+                .withHints(this, hintRequest)
+                .withSmartlock(this, smartlockReq)
+                .build()
+    }
+
     /*
     * Initialize Hint request
     * */
-    private fun initHintRequest() {
-        hintRequest = HintRequest.Builder()
-                .setHintPickerConfig(
-                        CredentialPickerConfig.Builder()
-                                .setShowCancelButton(true)
-                                .setPrompt(CredentialPickerConfig.Prompt.SIGN_IN)
-                                .build()
-                )
-                .setEmailAddressIdentifierSupported(true)
-                .build()
-    }
+    private fun createHintRequest() = HintRequest.Builder()
+            .setHintPickerConfig(
+                    CredentialPickerConfig.Builder()
+                            .setShowCancelButton(true)
+                            .setPrompt(CredentialPickerConfig.Prompt.SIGN_IN)
+                            .build()
+            )
+            .setEmailAddressIdentifierSupported(true)
+            .build()
+
 
     /*
     * Initialize Google Sign-in options
     * */
-    private fun initGoogleSignInOptions() {
-        googleSignInOptions = GoogleSignInOptions
-                .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build()
-    }
+    private fun createGoogleSignInOptions() = GoogleSignInOptions
+            .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .build()
+
 
     /*
     * Initialize Smartlock credentials request
     * */
-    private fun initSmartlockCredentialsRequest() {
-        smartlockCredentialsRequest = CredentialRequest.Builder()
-                .setPasswordLoginSupported(true)
-                .build()
-    }
+    private fun createSmartlockCredentialsRequest() = CredentialRequest.Builder()
+            .setPasswordLoginSupported(true)
+            .build()
+
 
     /*
     * Initialize Google API Client
     * */
-    private fun initGoogleApiClient() {
-        googleApiClient = GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .enableAutoManage(this, this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, googleSignInOptions)
-                .addApi(Auth.CREDENTIALS_API)
-                .build()
-    }
+    private fun createGoogleApiClient() = GoogleApiClient.Builder(this)
+            .addConnectionCallbacks(this)
+            .enableAutoManage(this, this)
+            .addApi(Auth.GOOGLE_SIGN_IN_API, createGoogleSignInOptions())
+            .addApi(Auth.CREDENTIALS_API)
+            .build()
+
     //endregion
 
     //region GoogleSignIn
 
     /*
-    * Initiate Sign In
-    * */
-    private fun initiateGoogleSignIn() {
-        val signInIntent = Auth.GoogleSignInApi.getSignInIntent(googleApiClient)
-        startActivityForResult(signInIntent, RC_SIGN_IN)
-    }
-
-    /*
-    * Handle Sign In Resolution
-    * */
-    private fun handleGoogleSignInResolution(resultCode: Int, data: Intent?) {
-        if (resultCode == AppCompatActivity.RESULT_CANCELED) {
-            userCancelledGoogleSignIn()
-        } else {
-            userGoogleSignInSuccess(data)
-        }
-    }
-
-    /*
     * User Google Sign-In Success
     * */
-    private fun userGoogleSignInSuccess(data: Intent?) {
+    override fun userGoogleSignInSuccess(data: Intent?) {
         val googleSignInResult: GoogleSignInResult = Auth.GoogleSignInApi.getSignInResultFromIntent(data)
 
         if (googleSignInResult.isSuccess) {
             val googleSignInAccount: GoogleSignInAccount? = googleSignInResult.signInAccount
-            proceedOnMainScreen(googleSignInAccount?.email)
+            signInSuccess(googleSignInAccount?.email!!)
         } else {
             googleSignInResultFailure()
         }
@@ -174,14 +158,14 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
     /*
     * Google Sign-In Failure
     * */
-    private fun googleSignInResultFailure() {
+    override fun googleSignInResultFailure() {
         Toast.makeText(this, "Authentication failure", Toast.LENGTH_SHORT).show()
     }
 
     /*
     * User Cancelled Google Sign-In
     * */
-    private fun userCancelledGoogleSignIn() {
+    override fun userCancelledGoogleSignIn() {
         Toast.makeText(this, "User cancelled Google Sign-In flow", Toast.LENGTH_SHORT).show()
     }
     //endregion
@@ -189,136 +173,62 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
     //region CredentialsRequest
 
     /*
-    * Handle Credential Request Resolution
-    * */
-    private fun handleCredentialRequestResolution(resultCode: Int, data: Intent?) {
-        if (resultCode == AppCompatActivity.RESULT_CANCELED) {
-            credentialRequestCancelled()
-        } else {
-            credentialRequestResolutionSuccess(data)
-        }
-    }
-
-    /*
     * Credential Request Resolution Success
     * */
-    private fun credentialRequestResolutionSuccess(data: Intent?) {
+    override fun credentialRequestResolutionSuccess(data: Intent?) {
         val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
         credential?.let {
-            proceedOnMainScreen(it.id)
+            signInSuccess(it.id)
         }
     }
 
-    /*
-    * Request Credentials
-    * */
-    private fun requestCredentials() {
-        Auth
-                .CredentialsApi
-                .request(googleApiClient, smartlockCredentialsRequest)
-                .setResultCallback({ credentialRequestResult ->
-                    handleCredentialRequestResult(credentialRequestResult)
-                })
-    }
-
-    /*
-    * Handle Credential Request Result
-    * */
-    private fun handleCredentialRequestResult(credentialRequestResult: CredentialRequestResult) {
-        if (credentialRequestResult.status.isSuccess) {
-            proceedOnMainScreen(credentialRequestResult.credential.id)
-        } else {
-            resolveCredentialRequest(credentialRequestResult.status)
-        }
-    }
-
-    private fun resolveCredentialRequest(status: Status?) {
-        if (status?.statusCode == CommonStatusCodes.RESOLUTION_REQUIRED) {
-            initiateCredentialRequestResolution(status)
-        } else {
-            credentialRequestFailure()
-        }
-    }
-
-    /*
-    * Initiate Credential Request Resolution
-    * */
-    private fun initiateCredentialRequestResolution(status: Status?) {
-        try {
-            status?.startResolutionForResult(this, RC_CREDENTIALS_REQUEST)
-        } catch (sendIntentException: IntentSender.SendIntentException) {
-            credentialRequestResolutionFailure()
-        }
-    }
 
     /*
     * Credential Request Cancelled
     * */
-    private fun credentialRequestCancelled() {
+    override fun credentialRequestCancelled() {
         Toast.makeText(this, "Credential Request cancelled", Toast.LENGTH_SHORT).show()
     }
 
     /*
     * Credential Request Resolution Failed
     * */
-    private fun credentialRequestResolutionFailure() {
+    override fun credentialRequestResolutionFailure() {
         Toast.makeText(this, "Credential Request Resolution failure", Toast.LENGTH_SHORT).show()
     }
 
     /*
     * Credential Request Failed
     * */
-    private fun credentialRequestFailure() {
+    override fun credentialRequestFailure() {
         Toast.makeText(this, "Credential Request failure", Toast.LENGTH_SHORT).show()
     }
 
     //endregion
 
-    //region EmailHintRequest
-    /*
-    * Request Email Hints
-    * */
-    private fun requestEmailHints() {
-        val intent = Auth.CredentialsApi.getHintPickerIntent(googleApiClient, hintRequest)
-        try {
-            startIntentSenderForResult(intent.intentSender, RC_HINT_REQUEST, null, 0, 0, 0)
-        } catch (e: IntentSender.SendIntentException) {
-            emailHintRequestFailure()
-        }
-    }
-
-    /*
-    * Handle Hint Request Resolution
-    * */
-    private fun handleEmailHintRequestResolution(resultCode: Int, data: Intent?) {
-        if (resultCode == AppCompatActivity.RESULT_CANCELED) {
-            emailHintRequestCancelled()
-        } else {
-            emailHintRequestSuccess(data)
-        }
-    }
 
     /*
     * Handle Hint Request Success
     * */
-    private fun emailHintRequestSuccess(data: Intent?) {
+    override fun emailHintRequestSuccess(data: Intent?) {
         val credential: Credential? = data?.getParcelableExtra(Credential.EXTRA_KEY)
         credential?.let {
-            proceedOnMainScreen(it.id)
+            signInSuccess(it.id)
         }
     }
+
 
     /*
     * Hint Request Cancelled
     * */
-    private fun emailHintRequestCancelled() {
+    override fun emailHintRequestCancelled() {
         Toast.makeText(this, "Hint Request cancelled by user", Toast.LENGTH_SHORT).show()
     }
 
     /*
     * Hint Request Failed
     * */
-    private fun emailHintRequestFailure() {
+    override fun emailHintRequestFailure() {
         Toast.makeText(this, "Hint Request failure", Toast.LENGTH_SHORT).show()
     }
 
@@ -350,79 +260,35 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
                         .setPassword(passwordTextInput.editText?.text.toString().trim())
                         .build()
 
-        Auth
-                .CredentialsApi
-                .save(googleApiClient, credentialToSave)
-                .setResultCallback({
-                    result ->
-                    handleCredentialSaveResult(result)
-                })
+        authManager?.saveCredential(credentialToSave)
     }
 
-    /*
-    * Handle Credential Save Result
-    * */
-    private fun handleCredentialSaveResult(result: Result) {
-        val status: Status = result.status
-
-        if (status.isSuccess) {
-            credentialSaveSuccess()
-        } else {
-            handlePossibleCredentialSaveResolution(status)
-        }
-    }
-
-    /*
-    * Handle Possible Credential Save Resolution
-    * */
-    private fun handlePossibleCredentialSaveResolution(status: Status) {
-        if (status.hasResolution()) {
-            try {
-                status.startResolutionForResult(this, RC_CREDENTIAL_SAVE)
-            } catch (e: IntentSender.SendIntentException) {
-                credentialSaveResolutionFailure()
-            }
-        } else {
-            credentialSaveFailure()
-        }
-    }
-
-    /*
-    * Handle Credential Save Resolution
-    * */
-    private fun handleCredentialSaveResolution(resultCode: Int, data: Intent?) {
-        if (resultCode == AppCompatActivity.RESULT_CANCELED) {
-            credentialSaveResolutionCancelled()
-        } else {
-            credentialSaveSuccess()
-        }
-    }
 
     /*
     * User Cancelled Credential Save Resolution
     * */
-    private fun credentialSaveResolutionCancelled() {
+    override fun credentialSaveResolutionCancelled() {
         Toast.makeText(this, "User cancelled credential save resolution", Toast.LENGTH_SHORT).show()
     }
 
     /*
     * Credential Save Resolution Failed
     * */
-    private fun credentialSaveResolutionFailure() {
+    override fun credentialSaveResolutionFailure() {
         Toast.makeText(this, "Credential save resolution failed", Toast.LENGTH_SHORT).show()
     }
 
     /*
     * Credential Save Failed
     * */
-    private fun credentialSaveFailure() {
+    override fun credentialSaveFailure() {
         Toast.makeText(this, "Credential save failed", Toast.LENGTH_SHORT).show()
     }
 
     /*
     * Credential Save Success
     * */
-    private fun credentialSaveSuccess() {
+    override fun credentialSaveSuccess() {
         Toast.makeText(this, "Credentials successfully saved", Toast.LENGTH_SHORT).show()
     }
 
@@ -441,12 +307,10 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
     }
     //endregion
 
-    /*
-    * Move to next screen with the user's email
-    * */
-    private fun proceedOnMainScreen(userEmail: String?) {
-        MainActivity.startActivity(this, userEmail)
+    override fun signInSuccess(email: String) {
+        MainActivity.startActivity(this, email)
     }
+
 
     /*
     * Google API Connection Failed
@@ -468,12 +332,6 @@ class SignInActivity : AppCompatActivity(), GoogleApiClient.OnConnectionFailedLi
     * */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
-        when (requestCode) {
-            RC_SIGN_IN -> handleGoogleSignInResolution(resultCode, data)
-            RC_CREDENTIALS_REQUEST -> handleCredentialRequestResolution(resultCode, data)
-            RC_HINT_REQUEST -> handleEmailHintRequestResolution(resultCode, data)
-            RC_CREDENTIAL_SAVE -> handleCredentialSaveResolution(resultCode, data)
-        }
+        authManager?.handle(requestCode, resultCode, data)
     }
 }
