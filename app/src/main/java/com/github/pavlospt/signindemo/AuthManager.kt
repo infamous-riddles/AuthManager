@@ -16,6 +16,7 @@ import com.google.android.gms.common.api.Result
 import com.google.android.gms.common.api.Status
 import java.lang.ref.WeakReference
 
+
 class AuthManager private constructor(builder: AuthManagerBuilder) {
 
     companion object {
@@ -70,13 +71,31 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         activity.startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
+    fun signOutOfGoogle() {
+        Auth
+            .GoogleSignInApi
+            .signOut(googleApiClient)
+            .setResultCallback {
+                googleView.get()?.googleSignOut(it)
+            }
+    }
+
+    fun revokeGoogleAccess() {
+        Auth
+            .GoogleSignInApi
+            .revokeAccess(googleApiClient)
+            .setResultCallback {
+                googleView.get()?.googleAccessRevoked(it)
+            }
+    }
+
     fun saveCredential(credential: Credential) {
-        Auth.CredentialsApi
-                .save(googleApiClient, credential)
-                .setResultCallback({
-                    result ->
-                    handleCredentialSaveResult(result)
-                })
+        Auth
+            .CredentialsApi
+            .save(googleApiClient, credential)
+            .setResultCallback({
+                handleCredentialSaveResult(it)
+            })
     }
 
     /*
@@ -218,10 +237,10 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
     /* [Request Credentials] */
     fun requestCredentials() {
         Auth.CredentialsApi
-                .request(googleApiClient, smartlockCredentialsRequest)
-                .setResultCallback({ credentialRequestResult ->
-                    handleCredentialRequestResult(credentialRequestResult)
-                })
+            .request(googleApiClient, smartlockCredentialsRequest)
+            .setResultCallback {
+                handleCredentialRequestResult(it)
+            }
     }
 
     fun handle(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -238,7 +257,6 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         smartLockView.clear()
         hintView.clear()
     }
-
 
     class AuthManagerBuilder internal constructor(val activity: AppCompatActivity) {
 

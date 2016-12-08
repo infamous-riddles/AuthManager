@@ -6,4 +6,6 @@
     <string name="email_address">Email Address</string>
     <string name="password">Password</string>
     <string name="save_credentials">Save Credentials</string>
+    <string name="google_sign_out">Google Sign-Out</string>
+    <string name="revoke_access">Revoke Access</string>
 </resources>

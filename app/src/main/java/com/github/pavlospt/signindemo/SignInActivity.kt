@@ -16,20 +16,21 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.common.api.Status
 
 
 class SignInActivity : AppCompatActivity(),
-        GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
-        GoogleView, SmartLockView, HintView {
-
+    GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks,
+    GoogleView, SmartLockView, HintView {
 
     private var authManager: AuthManager? = null
-
 
     /*
     * Views
     * */
     private lateinit var signInButton: SignInButton
+    private lateinit var signOutButton: Button
+    private lateinit var revokeAccessButton: Button
     private lateinit var requestHintsButton: Button
     private lateinit var requestUserCredentials: Button
     private lateinit var saveCredentialsButton: Button
@@ -43,7 +44,6 @@ class SignInActivity : AppCompatActivity(),
 
         initViews()
         initAuthManager()
-
     }
 
     private fun initViews() {
@@ -52,6 +52,8 @@ class SignInActivity : AppCompatActivity(),
         requestHintsButton = findViewById(R.id.request_hints_button) as Button
 
         signInButton = findViewById(R.id.sign_in_button) as SignInButton
+        signOutButton = findViewById(R.id.sign_out_google) as Button
+        revokeAccessButton = findViewById(R.id.revoke_access_button) as Button
 
         emailAddressTextInput = findViewById(R.id.email_address_text_input) as TextInputLayout
         passwordTextInput = findViewById(R.id.password_text_input) as TextInputLayout
@@ -73,6 +75,14 @@ class SignInActivity : AppCompatActivity(),
             authManager?.signInWithGoogle()
         }
 
+        signOutButton.setOnClickListener {
+            authManager?.signOutOfGoogle()
+        }
+
+        revokeAccessButton.setOnClickListener {
+            authManager?.revokeGoogleAccess()
+        }
+
         saveCredentialsButton.setOnClickListener {
             saveCredentials()
         }
@@ -86,53 +96,50 @@ class SignInActivity : AppCompatActivity(),
         val smartlockReq = createSmartlockCredentialsRequest()
 
         authManager = AuthManager
-                .Builder(this)
-                .withGoogle(this, googleApiClient)
-                .withHints(this, hintRequest)
-                .withSmartlock(this, smartlockReq)
-                .build()
+            .Builder(this)
+            .withGoogle(this, googleApiClient)
+            .withHints(this, hintRequest)
+            .withSmartlock(this, smartlockReq)
+            .build()
     }
 
     /*
     * Initialize Hint request
     * */
     private fun createHintRequest() = HintRequest.Builder()
-            .setHintPickerConfig(
-                    CredentialPickerConfig.Builder()
-                            .setShowCancelButton(true)
-                            .setPrompt(CredentialPickerConfig.Prompt.SIGN_IN)
-                            .build()
-            )
-            .setEmailAddressIdentifierSupported(true)
-            .build()
-
+        .setHintPickerConfig(
+            CredentialPickerConfig.Builder()
+                .setShowCancelButton(true)
+                .setPrompt(CredentialPickerConfig.Prompt.SIGN_IN)
+                .build()
+        )
+        .setEmailAddressIdentifierSupported(true)
+        .build()
 
     /*
     * Initialize Google Sign-in options
     * */
     private fun createGoogleSignInOptions() = GoogleSignInOptions
-            .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .build()
-
+        .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        .requestEmail()
+        .build()
 
     /*
     * Initialize Smartlock credentials request
     * */
     private fun createSmartlockCredentialsRequest() = CredentialRequest.Builder()
-            .setPasswordLoginSupported(true)
-            .build()
-
+        .setPasswordLoginSupported(true)
+        .build()
 
     /*
     * Initialize Google API Client
     * */
     private fun createGoogleApiClient() = GoogleApiClient.Builder(this)
-            .addConnectionCallbacks(this)
-            .enableAutoManage(this, this)
-            .addApi(Auth.GOOGLE_SIGN_IN_API, createGoogleSignInOptions())
-            .addApi(Auth.CREDENTIALS_API)
-            .build()
+        .addConnectionCallbacks(this)
+        .enableAutoManage(this, this)
+        .addApi(Auth.GOOGLE_SIGN_IN_API, createGoogleSignInOptions())
+        .addApi(Auth.CREDENTIALS_API)
+        .build()
 
     //endregion
 
@@ -216,14 +223,13 @@ class SignInActivity : AppCompatActivity(),
         }
 
         val credentialToSave: Credential =
-                Credential
-                        .Builder(emailAddressTextInput.editText?.text.toString())
-                        .setPassword(passwordTextInput.editText?.text.toString().trim())
-                        .build()
+            Credential
+                .Builder(emailAddressTextInput.editText?.text.toString())
+                .setPassword(passwordTextInput.editText?.text.toString().trim())
+                .build()
 
         authManager?.saveCredential(credentialToSave)
     }
-
 
     /*
     * User Cancelled Credential Save Resolution
@@ -276,6 +282,13 @@ class SignInActivity : AppCompatActivity(),
         }
     }
 
+    override fun googleSignOut(status: Status) {
+        Toast.makeText(this, "Google Sign-out with status: $status", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun googleAccessRevoked(status: Status) {
+        Toast.makeText(this, "Google Access Revoked with status: $status", Toast.LENGTH_SHORT).show()
+    }
 
     /*
     * Google API Connection Failed
@@ -298,5 +311,10 @@ class SignInActivity : AppCompatActivity(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         authManager?.handle(requestCode, resultCode, data)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        authManager?.destroy()
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_sign_in"
@@ -11,13 +11,13 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:orientation="vertical"
     tools:context="com.github.pavlospt.signindemo.SignInActivity">
 
     <android.support.design.widget.TextInputLayout
         android:id="@+id/email_address_text_input"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true">
+        android:layout_height="wrap_content">
 
         <android.support.design.widget.TextInputEditText
             android:layout_width="200dp"
@@ -30,9 +30,7 @@
     <android.support.design.widget.TextInputLayout
         android:id="@+id/password_text_input"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/email_address_text_input"
-        android:layout_centerHorizontal="true">
+        android:layout_height="wrap_content">
 
         <android.support.design.widget.TextInputEditText
             android:layout_width="200dp"
@@ -46,30 +44,35 @@
         android:id="@+id/save_credentials_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/password_text_input"
-        android:layout_centerHorizontal="true"
         android:text="@string/save_credentials"/>
 
     <Button
         android:id="@+id/request_hints_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
         android:text="@string/request_hints"/>
 
     <Button
         android:id="@+id/request_user_credentials_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/request_hints_button"
-        android:layout_centerHorizontal="true"
         android:text="@string/request_user_credentials"/>
+
+    <Button
+        android:id="@+id/sign_out_google"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/google_sign_out"/>
+
+    <Button
+        android:id="@+id/revoke_access_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/revoke_access"/>
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in_button"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"/>
+        android:layout_height="wrap_content"/>
 
-</RelativeLayout>
+</LinearLayout>
