@@ -8,6 +8,10 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
+import com.github.pavlospt.authmanager.models.SignInSuccess
+import com.github.pavlospt.authmanager.views.GoogleView
+import com.github.pavlospt.authmanager.views.HintView
+import com.github.pavlospt.authmanager.views.SmartLockView
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.CredentialPickerConfig
@@ -287,7 +291,7 @@ class SignInActivity : AppCompatActivity(),
         val alertDialogBuilder: AlertDialog.Builder = AlertDialog
             .Builder(this)
             .setTitle(R.string.credential_received)
-            .setMessage(R.string.what_do_you_want_to_do_with_credential)
+            .setMessage(getString(R.string.what_do_you_want_to_do_with_credential, credential?.id))
             .setPositiveButton(getString(R.string.use_credential), { dialogInterface, i ->
                 MainActivity.startActivity(this@SignInActivity, credential?.id)
             })

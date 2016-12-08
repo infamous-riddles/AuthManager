@@ -3,6 +3,10 @@ package com.github.pavlospt.signindemo
 import android.content.Intent
 import android.content.IntentSender
 import android.support.v7.app.AppCompatActivity
+import com.github.pavlospt.authmanager.models.SignInSuccess
+import com.github.pavlospt.authmanager.views.GoogleView
+import com.github.pavlospt.authmanager.views.HintView
+import com.github.pavlospt.authmanager.views.SmartLockView
 import com.google.android.gms.auth.api.Auth
 import com.google.android.gms.auth.api.credentials.Credential
 import com.google.android.gms.auth.api.credentials.CredentialRequest
@@ -25,8 +29,8 @@ class AuthManager private constructor(builder: AuthManagerBuilder) {
         fun Builder(activity: AppCompatActivity): AuthManagerBuilder = AuthManager.AuthManagerBuilder(activity)
 
         @JvmStatic
-        fun withBuilder(smartLockManagerBuilder: AuthManagerBuilder): AuthManager {
-            return AuthManager(smartLockManagerBuilder)
+        fun withBuilder(authManagerBuilder: AuthManagerBuilder): AuthManager {
+            return AuthManager(authManagerBuilder)
         }
     }
 
