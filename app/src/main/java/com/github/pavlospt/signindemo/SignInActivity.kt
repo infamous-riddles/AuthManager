@@ -23,7 +23,6 @@ class SignInActivity : AppCompatActivity(),
         GoogleView, SmartLockView, HintView {
 
 
-
     private var authManager: AuthManager? = null
 
 
@@ -270,10 +269,10 @@ class SignInActivity : AppCompatActivity(),
     //endregion
 
     override fun signInSuccess(signInSuccess: SignInSuccess) {
-        if(signInSuccess.hasCredential()) {
+        if (signInSuccess.hasCredential()) {
             MainActivity.startActivity(this, signInSuccess.credential.id)
-        }else if(signInSuccess.hasGoogleSignInAccount()){
-            MainActivity.startActivity(this, signInSuccess.googleSignInAccount.id)
+        } else if (signInSuccess.hasGoogleSignInAccount()) {
+            MainActivity.startActivity(this, signInSuccess.googleSignInAccount.email)
         }
     }
 
