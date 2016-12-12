@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1071636679426",
+    "project_id": "ac-schedule"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1071636679426:android:988a70013241dfe3",
+        "android_client_info": {
+          "package_name": "com.github.pavlospt.signindemo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1071636679426-2uv97ohle2q838i0dpv6j4bqblgncp06.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.github.pavlospt.signindemo",
+            "certificate_hash": "2968F8DCC4C9A51B7A2D2AD8F90970BAE780CBD0"
+          }
+        },
+        {
+          "client_id": "1071636679426-bulvu8g7mq2goir8t6vmgvr5icjv26r9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJ9W7RZIlO7a3rbH2zGwI7i_VHc9_Hvag"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
