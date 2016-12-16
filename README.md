@@ -1,3 +1,5 @@
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-AuthManager-brightgreen.svg?style=flat)]()
+
 # Auth Manager
 
 AuthManager is a library which eliminates the boilerplate of Google SignIn and SmartLock integration.
